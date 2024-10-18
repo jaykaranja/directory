@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import DataTable from "../components/Table";
 import PageHeader from "../components/PageHeader";
 import _service from "../utils/AxiosInstance";
@@ -8,6 +8,7 @@ import { TextBox } from "devextreme-react";
 
 const Search = () => {
   const localUsers = useSelector((state) => state.users);
+  const [pageState, setPageState] = useState("idle");
   const [selectedUser, setselectedUser] = useState(null);
   const [searchArgs, setSearchArgs] = useState(null);
   const dispatch = useDispatch()
@@ -29,9 +30,15 @@ const Search = () => {
       getUsers();
     }
   }, [localUsers, dispatch]);
-  const [pageState, setPageState] = useState("idle");
+
+  const searchFunction = useCallback(
+    (e) => e ? localUsers.filter(item => item.email.toLowerCase().includes(e.toLowerCase())) : [],
+    [],
+  )
+  
+
   const searchedUsers = useMemo(() => {
-    return searchArgs ? localUsers.filter(item => item.email.toLowerCase().includes(searchArgs.toLowerCase())) : localUsers;
+    return searchArgs ? searchFunction(searchArgs) : localUsers;
   }, [searchArgs, localUsers]);
 
 
