@@ -5,6 +5,7 @@ import {
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Users from "./pages/Users";
+import Search from "./pages/Search";
 
 function App() {
   const router = createBrowserRouter([
@@ -14,11 +15,11 @@ function App() {
       children: [
         {
           path: "",
-          element: <Home />
+          element: <Users />
         },
         {
-          path: "/users",
-          element: <Users />
+          path: "/search",
+          element: <Search />
         }
       ]
     },

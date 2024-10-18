@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 const PageHeader = ({ heading, subHeading }) => {
   return (
     <div className="flex flex-col gap-2 px-8">
@@ -7,4 +9,4 @@ const PageHeader = ({ heading, subHeading }) => {
   );
 };
 
-export default PageHeader;
+export default memo(PageHeader);
