@@ -2,23 +2,22 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import DataTable from "../components/Table";
 import PageHeader from "../components/PageHeader";
 import _service from "../utils/AxiosInstance";
-import { useDispatch, useSelector } from "react-redux";
 import AddUser from "../components/AddUser";
 import { TextBox } from "devextreme-react";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 const Search = () => {
-  const localUsers = useSelector((state) => state.users);
+  const handler = useLocalStorage()
   const [pageState, setPageState] = useState("idle");
   const [selectedUser, setselectedUser] = useState(null);
   const [searchArgs, setSearchArgs] = useState(null);
-  const dispatch = useDispatch()
   useEffect(() => {
     const getUsers = async () => {
       try {
         // throw new Error("Simulation of a data fetch error")
         let res = await _service.get("users");
         if (res.data) {
-          dispatch(initiateUsers(res.data));
+          handler.initialize(res.data);
         }
       } catch (ex) {
         console.log(ex)
@@ -26,20 +25,23 @@ const Search = () => {
       }
     };
 
-    if (localUsers.length <= 0) {
+    if (handler.users.length <= 0) {
       getUsers();
     }
-  }, [localUsers, dispatch]);
+  }, []);
 
   const searchFunction = useCallback(
-    (e) => e ? localUsers.filter(item => item.email.toLowerCase().includes(e.toLowerCase())) : [],
-    [],
+    (e) => e ? handler.users.filter(item => item.email.toLowerCase().includes(e.toLowerCase())) : [],
+    [handler.users],
   )
   
 
   const searchedUsers = useMemo(() => {
-    return searchArgs ? searchFunction(searchArgs) : localUsers;
-  }, [searchArgs, localUsers]);
+    return searchArgs ? searchFunction(searchArgs) : handler.users;
+  }, [searchArgs, handler.users]);
+
+  const handleSelectedUser = useCallback((e) => setselectedUser(e), [])
+  const handlePageState = useCallback((e) => setPageState(e), [])
 
 
 
@@ -50,21 +52,29 @@ const Search = () => {
         subHeading={"Type any characters to filter users per their email addresses."}
       />
       <hr />
-      <div className="flex gap-4 px-8">
+      <div className="flex items-center gap-4 px-8">
         <TextBox 
           width={750}
           height={50}
           label="Search email..."
-          labelMode="floating"
-          onValueChanged={(e) => setSearchArgs(e.value)}
+          placeholder="Enter email here to search for users"
+          labelMode="hidden"
+          onValueChanged={useCallback((e) => setSearchArgs(e.value), [])}
         />
+        <button className="bg-blue-800/80 active:bg-blue-800 rounded shadow hover:bg-blue-800/90 transition duration-150 px-6 py-2 h-[50px] text-white text-sm" onClick={useCallback(
+          () => {
+            setSearchArgs(null)
+          },
+          [],
+        )
+        }>Clear</button>
       </div>
       <hr />
       <div className="px-4">
         <DataTable
           data={searchedUsers}
-          onUserSelect={setselectedUser}
-          handlePageState={setPageState}
+          onUserSelect={handleSelectedUser}
+          handlePageState={handlePageState}
         />
       </div>
       {/* Handle user adding or editing */}
@@ -72,9 +82,9 @@ const Search = () => {
         <div className="h-[97%] w-full text-white bg-black/50 absolute flex items-center">
           <div className="flex-1"></div>
           <AddUser
-            handlePageState={setPageState}
+            handlePageState={handlePageState}
             selectedUser={selectedUser}
-            handleSelectedUser={setselectedUser}
+            handleSelectedUser={handleSelectedUser}
           />
         </div>
       ) : null}

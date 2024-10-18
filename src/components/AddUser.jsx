@@ -2,9 +2,8 @@ import { useCallback, useReducer } from "react";
 import { HiXMark } from "react-icons/hi2";
 import { TextBox } from "devextreme-react/text-box";
 import formReducer from "../utils/reducers/AddUserFormReducer";
-import { addUser, updateUser } from "../utils/redux/actions";
-import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import useLocalStorage from "../hooks/useLocalStorage";
 
 const initialState = {
   name: "",
@@ -17,8 +16,7 @@ const AddUser = ({ handlePageState, selectedUser, handleSelectedUser }) => {
     formReducer,
     selectedUser ? selectedUser : initialState
   );
-  const currUsers = useSelector((state) => state.users);
-  const redux_dispatch = useDispatch();
+  const handler = useLocalStorage()
   const handleChange = useCallback((e) => {
     dispatch({
       type: "UPDATE_FIELD",
@@ -41,15 +39,17 @@ const AddUser = ({ handlePageState, selectedUser, handleSelectedUser }) => {
         toast.error("Phone number must be provided.");
         return;
       }
-      if (!selectedUser && currUsers.find((e) => e.email === formState.email)) {
+      if (!selectedUser && handler.users.find((e) => e.email === formState.email)) {
         toast.error(`User ${formState.email} already exists.`);
         return;
       }
-      redux_dispatch(
-        !selectedUser
-          ? addUser(formState)
-          : updateUser(formState.email, formState)
-      );
+
+      if (!selectedUser) {
+        handler.add(formState)
+      } else {
+        handler.update(formState.email, formState)
+      }
+
       handlePageState("idle");
       handleSelectedUser(null);
       toast.success(
@@ -62,11 +62,9 @@ const AddUser = ({ handlePageState, selectedUser, handleSelectedUser }) => {
       toast.error("Something went wrong. Try again later.");
     }
   }, [
-    currUsers,
     handleSelectedUser,
     formState,
     handlePageState,
-    redux_dispatch,
     selectedUser,
   ]);
 
